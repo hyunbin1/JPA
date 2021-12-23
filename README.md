@@ -62,7 +62,9 @@ JPA는 Java 애플리케이션과 JDBC API 사이에서 동작을 한다. 하지
 **JPA를 사용하는 이유**
 
 1. **생산성:** JPA로 CRUD를 하는 것은 코드 한줄로 할 수 있을 정도로 매우 간단하다.
+
 2. **유지보수:** 기존의 필드를 변경해도 모든 SQL를 수정할 필요가 없다. 필드만 추가하면 sql은 jpa가 알아서 처리해준다.
+
 3. **패러다임의 불일치 해결:** JPA가 상속처리를 기가막히게 한다.  신뢰할 수 있는 엔티티, 계층. - 자유로운 객체 탐색이 가능해진다. 또한 동일한 트랜젝션에서 조회한 엔티티는 같음을 보장해준다.
 
 4. **성능:** JPA의 성능 최적화 기능이 있다. 
@@ -88,3 +90,34 @@ JPA는 Java 애플리케이션과 JDBC API 사이에서 동작을 한다. 하지
 
 6. 표준
 
+
+
+# JPA 활용1
+
+### MemberRepository
+
+@PsersistenceContext: entity 매니저 - spring boot가 이 어노태이션이 있다면 entity 매니저를 주입해준다.
+
+
+
+**return type 주의하기**
+
+```java
+@PersistenceContext // entity 매니저 - spring boot가 이 어노태이션이 있다면 entity 매니저를 주입해준다.
+    private EntityManager em;
+
+    public Long save(Member member){
+        em.persist(member);
+        return member.getId();
+    }
+```
+
+로직 설명: member라는 객체를 저장하고 멤버의 아이디를 리턴한다. 
+
+왜 Member 자체로 리턴하지 않고 아이디 값만 리턴 했을까? 
+
+커멘드와 쿼리를 분리하라는 원칙에 의해서이다. 저장 로직은 사이드 이펙트를 일으키는 커멘드 성격이 높기 때문에  가급적  리턴 값은 안만드는 것이 좋다. 하지만 아이디만 있다면 조회가 가능하니 아이디 값만 적는다.
+
+
+
+Entity manage를 통한 모든 데이터 변경은 트렌젝션에서 이루어져야한다.
