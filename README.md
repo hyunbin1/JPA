@@ -103,6 +103,12 @@ JPA는 Java 애플리케이션과 JDBC API 사이에서 동작을 한다. 하지
 ​	 으로 서로 차이가 있다.
 
 3. **방언이란:** SQL 표준을 지키지 않는 특정데이터메이스만의 고유한 기능이다. 이것은 JPA 입장에서 방언이라고 표현하는 것이다. 현재 H2 데이터 베이스를 쓰고 있다. 이는 SQL 표준 문법을 사용하지 않고 H2만의 방언으로 쿼리를 작성한다면, JPA가 알아서 표준으로 번역해서 전달해 준다. 
+![image](https://user-images.githubusercontent.com/63040492/149646624-8c25ae80-49a2-4e9b-b2ef-4e5c403ab297.png)
+
+
+### JPA 구동 방식
+
+![image](https://user-images.githubusercontent.com/63040492/149646657-26bb8b17-b638-4315-87f6-0d508219921b.png)
 
 
 
