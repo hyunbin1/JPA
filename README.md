@@ -99,16 +99,28 @@ JPA는 Java 애플리케이션과 JDBC API 사이에서 동작을 한다. 하지
    - 가변 문자: MySQL은 <u>VARCHAR</u> - Oracle은 <u>VARCHAR2</u>
    - 문자열을 자르는 함수: SQL 표준은 <u>SUBSTRING()</u>, Oracle은 <u>SUBSTR()</u>
    - 페이징: MySQL은 LIMIT, Oracle은 ROWNUM
-
-​	 으로 서로 차이가 있다.
+     으로 서로 차이가 있다.
 
 3. **방언이란:** SQL 표준을 지키지 않는 특정데이터메이스만의 고유한 기능이다. 이것은 JPA 입장에서 방언이라고 표현하는 것이다. 현재 H2 데이터 베이스를 쓰고 있다. 이는 SQL 표준 문법을 사용하지 않고 H2만의 방언으로 쿼리를 작성한다면, JPA가 알아서 표준으로 번역해서 전달해 준다. 
-![image](https://user-images.githubusercontent.com/63040492/149646624-8c25ae80-49a2-4e9b-b2ef-4e5c403ab297.png)
 
+![image](https://user-images.githubusercontent.com/63040492/149646624-8c25ae80-49a2-4e9b-b2ef-4e5c403ab297.png)
 
 ### JPA 구동 방식
 
+1. Jpa는 Persistence라는 클래스에서 시작을 한다. 
+2. Persistence는 가장 만저 META-INF/persistence.xml 에서 설정 정보를 조회한다.
+3. 조회한 설정 정보를 기반으로 EntityManagerFactory라는 클래스를 만든다
+4. 그리고 필요할 때마다 Factory(공장)에서 EntityManager이라는 것을 찍어내서 사용한다.
+
+
+
 ![image](https://user-images.githubusercontent.com/63040492/149646657-26bb8b17-b638-4315-87f6-0d508219921b.png)
+
+
+
+
+
+
 
 
 
