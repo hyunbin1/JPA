@@ -112,9 +112,144 @@ JPA는 Java 애플리케이션과 JDBC API 사이에서 동작을 한다. 하지
 3. 조회한 설정 정보를 기반으로 EntityManagerFactory라는 클래스를 만든다
 4. 그리고 필요할 때마다 Factory(공장)에서 EntityManager이라는 것을 찍어내서 사용한다.
 
+​	**주의!**
+
+1.  JPA는 트렌젝션 단위로 작동시키는 것이 매우 중요하다. **데이터를 변경하는 모든 작업은 트렌젝션 안에서 실행되어야한다.** 따라서 em.getTransaction을 시작하고 끝나는 지점을 정해줘서 하나의 트렌젝션을 선언해주어야한다. 
+2. EntitiyManagerFactory는 맨 처음 로딩 시점에 **딱 한번만** 만들어 놓아야한다. 
+
+3. 엔티티 매니저는 쓰래드간 공유 X (사용하고 버려야 한다.) 따라서 DB에 저장되는 트랜젝션 단위를 할때마다 EntityManager을 만들어 주어야한다.  
+
+​	 *트렌젝션:  ex) 고객이 들어와서 어떤 행위를 하고 나갈때마다 우리는 고객의 디비 커낵션을 얻어서 쿼리를 날리고 종료해야한다. 이렇게 어떤 행위를 할 때 디							    비를 가져오고 종료할 때까지를 한 묶음으로 일관되는 단위
+
 
 
 ![image](https://user-images.githubusercontent.com/63040492/149646657-26bb8b17-b638-4315-87f6-0d508219921b.png)
+
+#### **객체와 테이블 생성하고 매핑하기**
+
+**<H2>**
+
+```sql
+create table Member(
+  id bigint not null,
+  name varchar(255),
+  primary key (id)
+);MEMBER 
+```
+
+<java Class Member>
+
+```java
+@Entity
+public class Member {
+
+    @Id
+    private Long id; // pk 값
+    private String name;
+}
+```
+
+
+
+### **JpaMain 클래스**
+
+1. **초기 작성 형식**
+
+```java
+// Entity 공장 생성 - 공장 생성은 한번만.
+        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("hello");// 파라미터 안에는 persistense.xml에 있는 unit 이름을 넣어준다.
+
+        // Entity Manager 객체 생성 - 트렌젝션 단위로 매번 생성.
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+        // 필요한 Entity Manager 코드 작성
+        EntityTransaction transaction = entityManager.getTransaction(); // 트렌젝션 선언
+
+        try { // 오류를 대비하기 위해 try, catch문 사용.
+            transaction.begin(); // 트렌젝션 시작.
+            // 코드 작성하기
+            transaction.commit(); // 트렌젝션 종료 - 커밋 시점에 영속성 컨텍스트에 있는 내용이 DB에 저장된다.
+        } catch(Exception e){
+            transaction.rollback(); // 오류 발생시 롤백 해주기
+        } finally{
+            entityManager.close();
+        }
+```
+
+2. 멤버 저장
+
+```java
+       try { // 오류를 대비하기 위해 try, catch문 사용.
+            transaction.begin(); // 트렌젝션 시작.
+            Member member = new Member();
+            member.setId(3L);
+            member.setName("HelloC");
+
+            entityManager.persist(member); // 객체를 영속성 컨텍스트에 저장. 그후 디비 저장.
+
+            transaction.commit(); // 트렌젝션 종료 - 커밋 시점에 영속성 컨텍스트에 있는 내용이 DB에 저장된다.
+        } catch(Exception e){
+            transaction.rollback(); // 오류 발생시 롤백 해주기
+        } finally{
+            entityManager.close();
+        }
+```
+
+3. 멤버 조회
+
+```java
+try { // 오류를 대비하기 위해 try, catch문 사용.
+            transaction.begin(); // 트렌젝션 시작.
+
+            Member findMember = entityManager.find(Member.class, 1L); // 클레스 이름, ID값을 넣어주면 찾는다
+            System.out.println("findMember.id = " + findMember.getId());
+            System.out.println("findMember.Name = " + findMember.getName());
+
+            transaction.commit(); // 트렌젝션 종료 - 커밋 시점에 영속성 컨텍스트에 있는 내용이 DB에 저장된다.
+        } catch(Exception e){
+            transaction.rollback();
+        } finally{
+            entityManager.close();
+        }
+```
+
+4. 멤버 수정
+
+```java
+try { // 오류를 대비하기 위해 try, catch문 사용.
+            transaction.begin(); // 트렌젝션 시작.
+
+            Member findMember = entityManager.find(Member.class, 1L); // 클레스 이름, ID값을 넣어주면 찾는다
+            findMember.setName("HelloJPA"); // 변경된 것이 있으면 jPA가 업데이트 쿼리를 작성해서 알아서 처리한다.
+
+    transaction.commit(); // 트렌젝션 종료 - 커밋 시점에 영속성 컨텍스트에 있는 내용이 DB에 저장된다.
+        } catch(Exception e){
+            transaction.rollback();
+        } finally{
+            entityManager.close();
+        }
+```
+
+
+
+5. 멤버 삭제
+
+```java
+try { // 오류를 대비하기 위해 try, catch문 사용.
+    transaction.begin(); // 트렌젝션 시작.
+    entityManager.remove(findMember);
+	
+    transaction.commit(); // 트렌젝션 종료 - 커밋 시점에 영속성 컨텍스트에 있는 내용이 DB에 저장된다.
+    } catch(Exception e){
+    	transaction.rollback();
+	} finally{
+		entityManager.close();
+	}
+```
+
+
+
+
 
 
 
