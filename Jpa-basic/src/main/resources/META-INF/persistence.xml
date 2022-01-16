@@ -11,7 +11,7 @@
             <property name="javax.persistence.jdbc.url" value="jdbc:h2:tcp://localhost/~/test"/>
             <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>
 
-            <!-- 옵션 -->
+            <!-- 옵션 - 쿼리가 생성될때 터미널에서 보기좋게 출력해줌 -->
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
             <property name="hibernate.use_sql_comments" value="true"/>
