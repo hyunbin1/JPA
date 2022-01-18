@@ -137,7 +137,7 @@ create table Member(
 );MEMBER 
 ```
 
-<java Class Member>
+<java Class Member>;
 
 ```java
 @Entity
