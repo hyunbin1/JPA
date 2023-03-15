@@ -17,3 +17,13 @@
 <br/>
 왠만하면 pk는 의미 없는 값을 쓰는 것이 좋다. 그래야 나중에 유연하게 사용할 수 있다. 아이디가 어디에 종속되면 나중에 새로운 비지니스를 추가할때 힘들어진다. \
 <br/>
+
+#### 실전예제3 - 다양한 연관관계 매핑
+##### 23/03/16
+
+![image](https://user-images.githubusercontent.com/63040492/225431875-342a650f-3638-4512-b9fc-e5aeea113aec.png)
+![image](https://user-images.githubusercontent.com/63040492/225431805-11ffd68b-aab1-4b5f-82e3-a1e765833f3a.png)
+![image](https://user-images.githubusercontent.com/63040492/225431833-3bd6d2f5-55f2-470d-b22d-2000815430f5.png)
+
+
+
