@@ -18,8 +18,9 @@
 왠만하면 pk는 의미 없는 값을 쓰는 것이 좋다. 그래야 나중에 유연하게 사용할 수 있다. 아이디가 어디에 종속되면 나중에 새로운 비지니스를 추가할때 힘들어진다. \
 <br/>
 
-#### 실전예제3 - 다양한 연관관계 매핑
 ##### 23/03/16
+#### 실전예제3 - 다양한 연관관계 매핑
+
 
 ![image](https://user-images.githubusercontent.com/63040492/225431875-342a650f-3638-4512-b9fc-e5aeea113aec.png)
 ![image](https://user-images.githubusercontent.com/63040492/225431805-11ffd68b-aab1-4b5f-82e3-a1e765833f3a.png)
@@ -81,4 +82,19 @@ public class Delivery {
 
 // .. 생략(나중에 추가)
 }
+```
 
+**다대다 관계는 일대다, 다대일로 변경해라!
+- 실전에서는 중간 테이블이 단순하지 않다.
+- ManyToMany는 제약이 많다: 필드 추가 불가능, 엔티티 테이블 불일치
+-> 따라서 실전에서는 절대 사용하지 않는다. 
+
+cf) @JoinColumn 참고 속성
+1. (referencedColumnName="") : 외래키가 참조하는 컬럼명이 다를 경우 사용한다. 없으면 테이블의 기본명을 사용한다. 
+2. optional: false로 설정하면 연관된 엔티티가 항상 있어야한다. 기본값 : True
+3. fetch: 글로벌 패치 전략을 설정한다. ex) ManyToMany = FetchType.EAGER, @OneToMany = FetchType.LAZY
+4. cascade : 영속성 전이 기능을 사용한다. 
+5. tergetEntity: 연관된 엔티티의 타임 정보를 설정한다. 하지만 이 기능은 거의 사용하지 않는다. 컬렉션을 사용해도 제네릭으로 타입 정보를 알 수 있다. 
+
+일대다는 Mappedby가 있지만 다대일는 Mappedby가 없다. 
+**다대일을 쓰면 이는 꼭 연관관계의 주인이 되어야 한다는 것이다. 
