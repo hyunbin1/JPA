@@ -25,5 +25,16 @@
 ![image](https://user-images.githubusercontent.com/63040492/225431805-11ffd68b-aab1-4b5f-82e3-a1e765833f3a.png)
 ![image](https://user-images.githubusercontent.com/63040492/225431833-3bd6d2f5-55f2-470d-b22d-2000815430f5.png)
 
-
+``` java
+// Domain.Delivery.class
+@Entity
+public class Delivery {
+  @Id @GeneratedValue
+  private Long id;
+  
+  private String city;
+  private String street;
+  private String zipcode;
+  private DeliveryStatus status;
+}
 
