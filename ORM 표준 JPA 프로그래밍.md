@@ -36,5 +36,49 @@ public class Delivery {
   private String street;
   private String zipcode;
   private DeliveryStatus status;
+  
+  // 딜리버리와 오더 일대일 관계 맺어주기
+  @OneToOne(mappedBy ="delivery")
+  private Order order;
+  
+}
+```
+
+``` java
+// Domain.Category.class
+@Entity
+public class Category {
+  @Id @GeneratedValue
+  private Long id;
+  private String name;
+  
+  // 양방향 설정하기
+  @ManyToOne(name = "PARENT_ID")
+  private Category parent;
+  
+  @OneToMany(mappedBy = "parent")
+  private List<Category> child = new ArrayList<>();
+  
+  // 다대다 설정해주기 (실제론 사용안하지만 수업내용상 시도)
+  @ManyToMany 
+  // 서로 조인하는 곳이 어디인지 알려주기 인버스 컬럼은 반대쪽에서 조인하느 곳을 알려줌
+  @JoinTable(name = "CATEGORY_ITEM", joinClumns = @JoinColumn(name = "CATEGORY_ID) ,inverseJoinColumns = @JoinCoulumn(name = "ITEM_ID")
+  private List<Item> items = new ArrayList<>();
+  
+  
+  
+}
+```
+
+``` java
+// Domain.Order.class
+// .. 생략(나중에 추가 - 이 강의에서 중요한 부분만 첨가)
+public class Delivery {
+  // 주문과 배달 양방향 관계 설정해주기 
+  @OneToOne
+  @JoinColumn(name = "DELIVERY_ID")
+  private Delevery delivery;
+
+// .. 생략(나중에 추가)
 }
 
