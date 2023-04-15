@@ -463,8 +463,71 @@ public abstract class Item {
   
 => 이 중 어떤 방법으로 관계매핑을 하더라도 JPA는 모두 활용할 수 있게 해준다. 
 
+#### @MappedSuperclass
+@MappedSuperclass는 객체 입장에서 name, id와 같은 속성이 많은 클래스에서 계속 나올 경우, 이 불편함을 해결하기 위해 공통 매핑 정보를 사용할 때 사용되는 어노테이션이다. 딱 공통 매핑 정보를 뿌려주기 위한 도구 정도일 뿐이다. 
+- 테이블과 관계가 없고, 단순히 엔티티가 공통으로 사용하는 매핑 정보를 모으는 역할이다. 
+- 주로 등록일, 수정일, 등록자, 수정자 같은 전체 엔티티에서 공통적으로 적용하는 정보를 모을 때 사용한다. 
+- cf) **@Entity 클래스는 엔티티나 @MappedSuperclass로 지정한 클래스만 상속 가능하다.**
+	
+- 특징: 
+	1. 상속관계에 매핑되지 않는다
+	2. 엔티티가 아니기때문에, 테이블과 매핑되지 않는다.
+	3. 부모 클래스를 상속 받는 **자식 클래스에 매핑 정보만을 제공**한다.
+	4. 조회, 검색이 불가능하다. em.find(BaseEntity) 사용 불가능하다.
+	5. 직접 생성해서 사용할 일이 없으므로 추상 클래스로 만들길 권장한다. 
+	
+	
+```java
+@MappedSuperclass
+public abstract class BaseEntity {
+	private String createBy;
+	private LocalDateTime createdDate;
+	private String lastModifiedBy;
+	private LocalDateTime lastModifiedDate;
 
-
+	public String getCreatedBy() {
+		return createBy;
+	}
+	// 각 속성의 getter, setter 기입
+	...
+}
+	
+```
+	
+```java
+@Entity
+public class Member extends BaseEntity {
+	// 이전 내용과 동일
+	...
+	
+```
+	
+```java
+// JpaMain.class
+// 이전 내용과 동일
+...
+try {
+	Member member = new Member();
+	member.setUsername("user1");
+	member.setCreatedBy("kim");
+	member.setCreatedDate(localDateTime.new());
+	
+	em.persist(member);
+	em.flush();
+	em.clear();
+	
+	tx.commit();
+}
+	
+	
+...
+// 이전 내용과 동일 
+	
+```
+	
+이렇게 하나의 클래스에 필요한 속성을 집어넣고 각 클래스에서 사용하게 되면, 각 클래스는 추가적인 코드가 필요없이 해당 속성들을 사용하기만 하면 된다. 코딩할때 굉장히 사용하기 좋은 것 같다. 
+	
+![image](https://user-images.githubusercontent.com/63040492/232199243-46546bea-9062-4122-a378-55d199464c35.png)
 
 
 
