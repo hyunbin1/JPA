@@ -519,15 +519,89 @@ try {
 	tx.commit();
 }
 	
-	
-...
 // 이전 내용과 동일 
-	
+...	
 ```
 	
 이렇게 하나의 클래스에 필요한 속성을 집어넣고 각 클래스에서 사용하게 되면, 각 클래스는 추가적인 코드가 필요없이 해당 속성들을 사용하기만 하면 된다. 코딩할때 굉장히 사용하기 좋은 것 같다. 
 	
 ![image](https://user-images.githubusercontent.com/63040492/232199243-46546bea-9062-4122-a378-55d199464c35.png)
+
+##프록시!!
+프록시를 왜 사용해야할까? 우리는 코드를 짤때 Member과 Team으로(처럼) 연관되어 있는 테이블이 있을 것이다. 하지만 우리가 Member만 출력하면 되는 비즈니스 모델일 경우가 있고, Member와 Team을 함께 사용해야되는 비즈니스 모델일 경우가 있다. Member만 출력해야될때는 그럼 낭비가 발생한다. 이 낭비를 막기 위해 프록시라는 것이 존재한다. 
+
+#### 프록시의 기초 - em.getReference()를 사용하면 된다
+- 기존의 em.find()와 em.**getReference()**를 비교해보자.
+- em.find()는 데이터베이스를 통해서 실제 엔티티 객체를 조회하는 기능을 한다. 
+- em.getReference()는 **데이터베이스 조회를 미루는 가짜(프록시) 엔티티 객체를 조회하는 역할을 한다. 이는 디비에 쿼리가 안나가는데도 객체가 조회가 된다. 이는 하이버네이트가 자기 내부의 객체를 사용해서 만든다. 
+
+![image](https://user-images.githubusercontent.com/63040492/232203150-359e450e-731a-40df-b5bc-c645434acb92.png)
+
+초기에는 위 사진 처럼 target에 텅텅 빈 껍데기만 있는 채로 생성이 되고 반환이 된다. 
+
+**프록시의 특징**
+- 프록시는 내부 하이버네이트의 라이브러리를 사용해서 실제 클래스를 자동으로 상속 받아서 만들어진다. 
+- 따라서 실제 클래스와 겉 모양이 같다. 
+- 사용하는 입장에서는 진짜 객체와 프록시 객체를 구분하지 않고 사용만 하면 된다(이론상)
+- 프록시 객체는 실제 객체의 참조(target)를 보관하고 있다.
+- 프록시 객체를 호출하면 프록시 객체는 실제 객체의 메소드를 호출한다. 
+
+** 프록시 객체의 초기화**
+Member member = em.getReference(Member.class, "id1");
+member.getName();
+위와 같은 코드가 있을 경우, 프록시는 영속성 컨텍스트에 target을 초기화 하기위해 초기화를 요청한다. 그 후 영속성 컨텍스트는 데이터베이스를 조회하여 실제 Entity를 생성한다. 그리고 target은 memberName 내용물을 가져와서 초기화 하게된다. 
+![image](https://user-images.githubusercontent.com/63040492/232203936-a6f2d075-e3f0-44a9-9a24-a4e7932e9a41.png)
+
+#### 중요한 프록시의 특징
+- **프록시 객체는 처음 사용할 때 한 번만 초기화 된다!** - 두번 호출할 경우 디비를 더이상 호출하지 않고도 불러온다
+- 프록시 객체를 초기화 할 때, 프록시 객체가 실제 엔티티로 바뀌는 것은 아니다. 초기화되면 프록시 객체를 통해서 실제 엔티티에 접근이 가능한 것이다. 
+- 프록시 객체는 원본 엔티티를 상속받는다. 따라서 타입 체크시 주의해야한다. == 비교 대신 instance of를 사용해야한다.
+- 영속성 컨텍스트를 찾는 엔티티가 이미 있으면 em.getReference()를 호출해도 실제 엔티티를 반환한다. 
+- 영속성 컨텍스트의 도움을 받을 수 없는 준영속 상태일 때, 프록시를 초기화하면 문제가 발생한다. (하이버네이트는 org.hibernate.LazyInitializationException 예외를 터트린다. 
+
+
+```java
+public class JpaMain{
+  public class void main(String[] args) {
+  	...
+    try {
+			Member member = new Member();
+			member.setUsername("Hello);
+			
+			em.persist(member);
+			em.flush();
+			em.clear();
+			
+			Member findMember = em.find(Member.class, member.getId());
+		  System.out.println("FindMember = " + findMember.getUId());
+			System.out.println("FindMember = " + findMember.getUsername());
+			
+			tx.commit();
+			}
+...
+```
+![image](https://user-images.githubusercontent.com/63040492/232202809-3734ce0f-119c-45f8-aa73-136276da2f26.png)
+
+이렇게 쿼리를 보면, 조인 쿼리를 미리 해와서 member만 필요함에도 불구하고, Team 쿼리도 같이 가져온 것을 볼 수 잇다. 
+하지만 em.find() 부분을 아래와 같이 고치면, select 쿼리가 안나가는 것을 볼 수 잇다. 
+```java
+	// Member findMember = em.find(Member.class, member.getId());
+	Member findMember = em.getReference(Member.class, member.getId());
+  // System.out.println("FindMember = " + findMember.getUId());
+	// System.out.println("FindMember = " + findMember.getUsername());
+```
+이렇게 getID 등 실제로 사용하는 코드가 없으면 member, team의 쿼리가 하나도 나오지 않는 것을 볼 수 있다. 
+
+![image](https://user-images.githubusercontent.com/63040492/232202918-2d68992d-ca47-48e3-967f-c56bb08c173a.png)
+
+하지만 실제로 system.out.println 의 주석을 풀고 사용하게되면, 아래와 같이 쿼리가 불러와 지는 것을 알 수 있다.
+
+![image](https://user-images.githubusercontent.com/63040492/232203015-e111e5ed-ad9a-467c-a9fe-7b42535d1448.png)
+
+**프록시는 실제 사용되는 시점에 디비에 쿼리를 조회한다**
+
+
+
 
 
 
