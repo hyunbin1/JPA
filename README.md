@@ -47,9 +47,9 @@
 
 그럼 **객체를 자바 컬렉션에 저장 하듯이 DB에 저장할 수는 없을까?** 라는 물음이 나올 것이다.
 
-**JAP란?**
+**JPA란?**
 
-JAP는 Java Persistence API의 준말이다. 이는 자바 진영의 ORM 기술 표준이다. ORM은 Object-relational mapping(개게 관계 매핑)으로 객체는 객체데로 설계를 하고, 관계형 DB는 관계형 DB대로 설계를 하면 ORM 프래임워크가 그 중간에서 서로 간의 매핑을 해준다. 대중적인 언어에는 대부분 ORM기술이 존재한다. TypeScript도 TypeORM으로 제공을 해준다. 
+JPA는 Java Persistence API의 준말이다. 이는 자바 진영의 ORM 기술 표준이다. ORM은 Object-relational mapping(개게 관계 매핑)으로 객체는 객체데로 설계를 하고, 관계형 DB는 관계형 DB대로 설계를 하면 ORM 프래임워크가 그 중간에서 서로 간의 매핑을 해준다. 대중적인 언어에는 대부분 ORM기술이 존재한다. TypeScript도 TypeORM으로 제공을 해준다. 
 
 JPA는 Java 애플리케이션과 JDBC API 사이에서 동작을 한다. 하지만 개발자는 JDBC를 직접 사용하지는 않고 JPA를 사용하여 JDBC API에 접근하여 DB와 상호작용을 한다. JDBC API는 SQL문을 DB에 제공하고 DB는 결과를 JDBC API에 반환해준다. 
 
@@ -546,7 +546,7 @@ try {
 - 프록시 객체는 실제 객체의 참조(target)를 보관하고 있다.
 - 프록시 객체를 호출하면 프록시 객체는 실제 객체의 메소드를 호출한다. 
 
-** 프록시 객체의 초기화**
+**프록시 객체의 초기화**
 Member member = em.getReference(Member.class, "id1");
 member.getName();
 위와 같은 코드가 있을 경우, 프록시는 영속성 컨텍스트에 target을 초기화 하기위해 초기화를 요청한다. 그 후 영속성 컨텍스트는 데이터베이스를 조회하여 실제 Entity를 생성한다. 그리고 target은 memberName 내용물을 가져와서 초기화 하게된다. 
@@ -555,9 +555,9 @@ member.getName();
 #### 중요한 프록시의 특징
 - **프록시 객체는 처음 사용할 때 한 번만 초기화 된다!** - 두번 호출할 경우 디비를 더이상 호출하지 않고도 불러온다
 - 프록시 객체를 초기화 할 때, 프록시 객체가 실제 엔티티로 바뀌는 것은 아니다. 초기화되면 프록시 객체를 통해서 실제 엔티티에 접근이 가능한 것이다. 
-- 프록시 객체는 원본 엔티티를 상속받는다. 따라서 타입 체크시 주의해야한다. == 비교 대신 instance of를 사용해야한다.
+- 프록시 객체는 원본 엔티티를 상속받는다. 따라서 타입 체크시 주의해야한다. == 비교 대신 instance of를 사용해야한다. 
 - 영속성 컨텍스트를 찾는 엔티티가 이미 있으면 em.getReference()를 호출해도 실제 엔티티를 반환한다. 
-- 영속성 컨텍스트의 도움을 받을 수 없는 준영속 상태일 때, 프록시를 초기화하면 문제가 발생한다. (하이버네이트는 org.hibernate.LazyInitializationException 예외를 터트린다. 
+- 영속성 컨텍스트의 도움을 받을 수 없는 준영속 상태일 때, 프록시를 초기화하면 문제가 발생한다. (하이버네이트는 org.hibernate.LazyInitializationException 예외를 터트린다. 이문제는 실제로 실무에서 많이 맞딱뜨리게 된다. em.close() 혹은 em.detach()를 하고 프록시를 초기화 하려고하면 에러가 나는것이다. 
 
 
 ```java
@@ -600,7 +600,11 @@ public class JpaMain{
 
 **프록시는 실제 사용되는 시점에 디비에 쿼리를 조회한다**
 
-
+#### 생성된 프록시를 확인하는 방법
+- 프록시 인스턴스의 초기화 여부 확인: PersistenceUil.isLoaded(Object 필요한 entity)
+- 프록시 클래스 확인 방법: System.out.println(필요한 entity.getClass().getName());
+- 프록시 강제 초기화: org.hibernate.Hibernate.initialize(필요한 entity);
+cf) JPA 표준은 강제 초기화가 없다. 강제 호출: member.getName()
 
 
 
