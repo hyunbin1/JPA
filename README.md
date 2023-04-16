@@ -606,6 +606,74 @@ public class JpaMain{
 - 프록시 강제 초기화: org.hibernate.Hibernate.initialize(필요한 entity);
 cf) JPA 표준은 강제 초기화가 없다. 강제 호출: member.getName()
 
+### 지연 로딩 & 즉시 로딩
+- 지연 로딩: 연관관계가 매핑 되어있는 TEAM과 MEMBER 이 있을 때 TEAM이 많이 사용되지 않는다고 하면 지연로딩을 사용한다. 
+Entity에서 연관관계 설정 시 fetch를 사용하면 된다. 지연로딩으로 세팅하면 프록시로 이 내용을 가져오게 되는 것이다. 로직이 실제로 사용될 때까지 기다렸다가 프록시가 디비에 접근해서 초기화를 한다. 팀을 가져올때가 아니라 팀을 사용할때다!! team.getName(); 할때 초기화가 이루어진다. 
+
+```java
+@Entity
+public class Member {
+	@Id
+	@GenerateValue
+	private Long id;
+	
+	@Column(name = "USERNAME")
+	private String name;
+	
+	@ManyToOne(fetch= FetchType.LAZY) // 지연 로딩
+	@JoinColumn(name "TEAM_ID")
+	private TEAM team;
+	}
+```
+
+- 즉시 로딩: MEMBER와 TEAM이 동시에 사용되는 경우가 많을 경우에 즉시 로딩을 사용한다. 
+즉시 로딩은 EAGER를 사용해서 조회 할 수 있다. 즉시로딩은 모든 데이터를 한번에 가져오기 때문에 모든 프록시가 한번에 즉시 초기화 된다. 
+```java
+@Entity
+public class Member {
+	@Id
+	@GenerateValue
+	private Long id;
+	
+	@Column(name = "USERNAME")
+	private String name;
+	
+	@ManyToOne(fetch= FetchType.EAGER) // 즉시 로딩
+	@JoinColumn(name "TEAM_ID")
+	private TEAM team;
+	}
+```
+#### 프록시와 즉시로딩을 사용할 때 주의할점
+- **가급적 지연 로딩만 사용하기!!(특히 실무에서는 더더욱이 그렇다)**
+- 즉시 로딩을 적용하면 예상하지 못한 SQL이 발생되기 때문이다. 
+- **즉시 로딩은 JPQL에서 N+1 문제를 일으킨다.**
+	ex) sql에서 member을 탐색하다가 TEAM이라는 속성이 있고, eager타입으로 되어있으면 TEAM도 호출하게 된다. 이렇게 되면 중복되는 쿼리를 많이 생성되게 된다. 최초 쿼리를 날렸는데 추가적으로 똑같은 쿼리가 나가는 것을 위에 말한 N+1쿼리라고 한다. 여기서 1이 최초 쿼리, n이 중복 쿼리이다. 
+	cf) 즉시로딩을 사용하고 싶지만 N+1문제를 해결하기 위해서는 모두 지연로딩으로 깐다음에, jpql에서 fetchJoin을 사용하는 것이다. 이는 join되어있는 모든 쿼리를 1번만 가져와서 사용하게 된다.
+- **@ManyToOne, @OneToOne은 기본이 즉시 로딩이기때문에 LAZY로 설정해주기!!!**
+- @OneToMany, @ManyToMany는 기본이 지연 로딩이다. 
+
+#### 지연로딩을 활용하는 방법! 이것은 이론적인 것이고, 실무에서는 모두 다 지연로딩으로 사용해야한다.
+- Member와 Team이 자주 사용되면 즉시 로딩
+- Member와 order는 가끔 사용되면 지연로딩
+- order와 product는 자주 사용되면 즉시로딩
+![image](https://user-images.githubusercontent.com/63040492/232283330-184d808c-a787-468a-b9e0-0635f4f2294e.png)
+
+#### 지연 로딩을 실무에서 활용할때!!
+- **모든 연관관계에 지연 로딩을 사용해라!**
+- **실무에서 즉시로딩을 사용하지 마라!**
+- jpql fetch 조인이나, 엔티티 그래프 기능을 사용하기(뒤에서 설명)
+- 즉시 로딩은 상상하지 못한 쿼리가 나온다. 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
