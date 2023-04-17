@@ -670,7 +670,104 @@ cf) 지연 로딩, 즉시로딩과 전혀 관계가 없다.
 - ex) 부모 엔티티를 저장할 때 자식 엔티티도 함께 저장하고 싶을 때이다. == **부모를 저장할때, 자식도 모두 persist로 호출하고 싶을 때 사용한다**
 - 영속성 전이(저장) : @OneToMany(mappedBy="parent", cascade=CascadeType.PERSIST)
 
+```java
+@Entity
+public class Parent {
+	@Id
+	@GeneratedValue
+	private Long id;
+	private String name;
+	@OneToMany(mappedBy="parent", cascade = CascadeType.ALL)
+	private List<Child> childList = new ArrayList<>();
+	
+	public void addChild(Child child){
+		childList.add(child);
+		child.setParent(this);
+	}
+	
+	//getter setter
+	... 
+```
+```java
+@Entity
+public class Child{
+	@Id
+	@GeneratedValue
+	private Long id;
+	private String name;
+	
+	@ManyToOne
+	@JoinColumn(name = "parent_id")
+	private Parent parent;
+	// getter setter
+	...
+```
+```java
+//JpaMain
+public class JpaMain{
+ public static void main(String[] args){
+ 	EntityManagerFactory emf = Persistence.createEntityManageFactory("hello');
+	EntityManager em = emf.createEntityManager();
+	
+	EntityTransaction tx - em.getTransaction();
+	
+	try{
+		Child child1 = new Child();
+		Child child2 = new Child();
+		
+		Parant parent = new Parent();
+		parent.addChild(child1);
+		parent.addChild(child2);
+		
+		//  이때 persist가 3번이나 필요하다. 
+		em.persist(parent);
+		em.persist(child1);
+		em.persist(child2);
+    // cascade를 사용하면 아래 코드만 사용하면 된다.
+		em.persist(parent);
+		
+		tx.commmit();
+	}
+	...
+```
 
+우리는 parent가 persist 가 되었을 때 child도 굳이 persist 안해줘도 저절로 되었으면 좋겠다!
+이때 사용하는 것이 영속성 전이(CASCADE)이다. 
+
+#### 영속성 전이: CASCADE - 주의!
+- 영속성 전이는 연관관계를 매핑하는 것과 아무 관련이 없다.
+- 엔티티를 영속화할 때 연관된 엔티티도 함께 영속화하는 편리함을 제공할 뿐이다. 
+- 일대다일때 항상 하는 것이 아니다. 하나의 부모가 모두 자식들을 관리할때 의미가 있다. (단일 소유자일때)
+- 하지만 여러 파일에서 자녀의 엔티티를 관리할때, 즉 여러 부모가 같은 자식을 관리할때는 사용하면 안된다. 
+
+#### CASCADE의 종류
+- **ALL: 항상 같이 저장되어야 할때 사용**
+- **PERSIST: 그냥 저장할때 영속용으로 사용**
+- **REMOVE: 삭제**
+- MERGE: 병합
+- REFRESH: REFRESH
+- DETACH: DETACH
+
+#### 고아 객체
+- 고아 객체 제거: 부모 엔티티와 연관관계가 끊어진 자식 엔티티를 자동으로 삭제하는 기능이다. 
+- orphanRemoval = true
+- Parent parent1 = em.find(Parent.class, id);
+	parent1.getChildren().remove(0);
+	// 자식 엔티티를 컬렉션에서 제거
+- DELETE FROM CHILD WHERE ID=?
+
+#### 고아 객체 사용할 때 주의할 점
+- 참조가 제거된 엔티티는 다른 곳에서 참조하지 않는 고아 객체로 보고 삭제하는 기능이다. 
+- 참조하는 곳이 하나일 때 사용해야한다!!
+- 특정 엔티티가 개인 소유할 때 사용
+- @OneToOne, @OneToMany만 가능하다
+- cf) 개념적으로 부모를 제거하면 자식은 고아가 된다. 따라서 고아 객체 제거 기능을 활성화 하면 부모를 제거할때 자식도 함께 제거된다. 이것은 CascadeType.REMOVE처럼 동작한다. 
+
+#### 영속성 전이+고아 객체, **생명주기**
+- CascadeType.ALL + orphanRemovel=true
+- 스스로 생명 주기를 관리하는 엔티티는 em.persist()로 영속화, em.remove()로 제거한다.
+- 두 옵션을 모두 활성화 하면 부모 엔티티를 통해서 자식의 생명 주기를 관리할 수 있다. 
+- 도매인 주도 설계(DDD)의 Aggregate Root 개념을 수현할 때 유용하다
 
 
 
