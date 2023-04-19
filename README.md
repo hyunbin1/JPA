@@ -803,6 +803,123 @@ JPA는 데이터 타입을 엔티티 타입과 값 타입으로 크게 2가지�
 		
 
 
+### 임베디드 타입(복합 값 타입)
+#### 임베디드 타입
+- 새로운 값 타입을 직접 정의할 수 있다
+- JPA는 임베디드 타입(embedded type)이라고 한다.
+- 주로 기본 값 타입을 모아서 만들어서 복합 값 타입이라고도 한다. 
+- 이는 int, String과 같은 값 타입이므로 추적이 안된다. 변경하면 끝!
+
+언제 사용하는지 예를 한번 들어보자. 우리는 회원 엔티티를 생성할때, 이름, 근무 시작일, 근무 종료일, 주소 도시, 주소 번지, 주소 우편번호를 가진다. == id, name, startDate, endDate, city, street, zipcode 
+하지만 여기에는 비슷한 속성인 것들이 있다. startDate와 endDate는 기간에 관련된 것이고, city, street, zipcode는 집 주소와 관련되어있다. 이를 하나의 관련된 것으로 묶고 싶을 때 우리는 임베디드 타입을 사용한다. startPeriod와 endPeriod는 workPeriod로, city, street, zipcode는 homeAddress로 묶고싶다. 그렇게 되면 아래와 같이 member의 속성이 매우 간단해진다. 
+![image](https://user-images.githubusercontent.com/63040492/233086371-f4ec09d2-c60c-4190-9cf1-fea70f08b5df.png)  ![image](https://user-images.githubusercontent.com/63040492/233085422-42053dbe-6f1b-48f0-9837-54b43c8a8fc6.png)
+
+#### 임베디드 타입 사용법
+1. @Embeddable: 값 타입을 정의하는 곳에 표시한다.
+2. @Embedded: 값 타입을 사용하는 곳에 표시한다. 
+3. 기본 생성자는 필수이다!
+
+#### 임베디드 타입의 장점
+- 재사용이 가능하다.
+- 재사용이 가능하기 때문에 응집도가 높다.
+- Period.isWork()처럼 해당 값 타입만 사용하는 의미 있는 메소드를 만들 수 있다. == 객체 지향에 좋음!!
+- 임베디드 타입을 포함한 모든 값 타입은, 값 타입을 소유한 엔티티에 생명주기를 의존한다. 
+
+
+```java
+@Entity
+public class Member {
+	@Id
+	@GeneratedValue
+	@Column(name="MEMBER_ID")
+	private Long id;
+	
+	@Column(name = "USERNAME")
+	private String username;
+	
+	//기간 period
+	@Embedded
+	private Period period;
+	
+	//주소
+	@Embedded
+	private Address address;
+	
+	//getter setter 
+	...
+}
+```
+```java
+
+@Embeddable
+public class Period {
+	private LocalDateTime startDate;
+	private LocalDateTime endDate;
+	
+	public Period() {} // 기본 생성자
+	//getter setter
+	...
+}
+```
+```java
+@Embeddable
+public class Address {
+	private String city;
+	private String street;
+	private String zipcode;
+	
+	public Address() {} // 기본 생성자
+	
+	public Address(String city, String street, String zipcode){
+		this.city = city;
+		this.street = street;
+		this.zipcode = zipcode;
+	}
+	
+	//getter setter 
+	...
+}
+```
+
+```java
+public class JpaMain {
+	public static void main(String[] args) {
+		//emf, em
+		...
+		try{
+			Member member = new Memeber();
+			member.setUsername("Hello");
+			member.setHomeAddress(new Address("city", "street", "zipcode");
+			member.setWordPeriod(new Period());
+			...
+		}
+		...
+	}
+}
+```
+
+#### 임베디드 타입과 테이블 매핑
+- 임베디드 타입은 엔티티의 값일 뿐이다. 
+- 임베디드 타입을 사용하기 전과 후에 **매핑하는 테이블은 같다.**
+- 객체와 테이블을 아주 세밀하게(find-grained) 매핑하는 것이 가능하다. 
+- 잘 설계한 ORM 애플리케이션은 매핑한 테이블의 수보다 클래스의 수가 더 많다. 
+- 이를 쓰면 용어, 코드, 도메인에 언어들을 공통으로 공유하면서 사용할 수 있는 장점이 있다. 
+- 엔티티 하위에 값 타입(ADDRESS)이 들어올텐데 이 하위에 엔티티가 들어올 수도 있다. 
+
+#### AttributeOverride: 속성 재정의
+- 만약에 한 엔티티에서 같은 값 타입을 사용하게 되면 어떻게 될까? 
+```java
+	@Embedded
+	private Address homeAddress;
+	@Embedded
+	private Address workAddress;
+```
+- 이때 오류를 해결하기 위해 사용되는 것이 AttributeOverride이다. 
+- 여러개면 AttributeOverrides, 하나면 @AttributeOverride를 사용해서 컬러 명 속성을 재정의 해주면 된다. 
+
+
+#### 임베디드 타입과 null
+- 임베디드 타입의 값이 null이면 매핑한 컬럼 값은 모두 null이 된다. 
 
 
 
