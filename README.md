@@ -922,14 +922,87 @@ public class JpaMain {
 - 임베디드 타입의 값이 null이면 매핑한 컬럼 값은 모두 null이 된다. 
 
 
+### 값 타입과 불변 객체 = 값 타입은 무조건 불변으로 만들자!!!
+- 값 타입은 복잡한 객체 세상을 조금이라도 단순화하려고 만든 개념이다. 따라서 값 타입은 단순하고 안전하게 다룰 수 있어야 한다. 
+우리는 엔티티를 복사하는 것은 부담스러워 하면서 값을 복사할 때는 크게 신경을 안쓰면서 코딩을 하게 된다. - 이는 값 타입이 자바 세상에서는 안전하게 설계되어 있어서 괜찮은 것이다. 하지만 값 타입을 복사할 때 항상 안전한 것은 아니다.
+
+#### 값 타입 공유 참조
+- 임베디드 타입 같은 값 타입을 여러 엔티티에서 공유하면 매우 위험하다. 
+- 부작용(Side Effect)가 발생한다. 
+- 아래 코드와 같이 member1만 거주지를 바꾸려고 setcity를 하려고 하면, sql은 insert 쿼리를 2번 보내서 member2의 도시도 newCity가 되어버린다. 
+
+```java
+try {
+	Address address = new Address("city", "street", "10000");
+	
+	Member member = new Member();
+	member.setUsername("member1");
+	member.setHomeAddress(address);
+	em.persist(member);
+
+	Member member2 = new Member();
+	member2.setUsername("member2");
+	member2.setHomeAddress(address);
+	em.persist(member2);
+	
+	member.getHomeAddress().setCity("newCity");	
+```
 
 
 
+#### 값 타입 복사
+- 값 타입의 실제 인스턴스인 값을 공유하는 것은 매우 위험하다. 
+- 따라서 아래 코드와 같이 **값을 공유 하는 것 대신 인스턴스 값을 복사해서 사용해야된다.** 
 
+```java
+try {
+	Address address = new Address("city", "street", "10000");
+	
+	Member member = new Member();
+	member.setUsername("member1");
+	member.setHomeAddress(address);
+	em.persist(member);
 
+	Address copyAddresss = new Address(address.getCity(), address.getStreet(), address.getZipcode());
 
+	Member member2 = new Member();
+	member2.setUsername("member2");
+	member2.setHomeAddress(copyAddress);
+	em.persist(member2);
+	
+	member.getHomeAddress().setCity("newCity");	
+```
 
+#### 객체 타입의 한계
+- 항상 값을 복사해서 사용하면 공유 참조(위와 같은 상황)로 인해 발생하는 부작용을 피할 수 있다.
+- 문제는 임베디드 타입처럼 **직접 정의한 값 타입은 자바의 기본 타입이 아니라 객체 타입이다.**
+- 자바 기본 타입에 값을 대입하면 값을 복사한다. 
+- **객체 타입은 참조 값을 직접 대입하는 것을 막을 방법이 없다.**
+- **객체의 공유 참조는 피할 수 없다.**
+- 객체 공유는 서로 같은 인스턴스(주소값)을 공유하고 있기 때문에 값이 변경이 되는 것이다. 
 
+#### 불변 객체
+- 이러한 문제를 해결하는 방법은 없다. 따라서 이러한 문제를 방지하기 위해서 객체 타입을 수정할 수 없게 만들어 부작용을 원천 차단시켜버려야 한다.
+- 값 타입은 불변 객체로 설계해야한다.
+- 생성자로만 값을 설정하고 수정자(Setter)를 만들지 않으면 된다. 
+- 참고로, Integer, String은 자바가 제공하는 대표적인 불변 객체이다. 
+**불변이라는 작은 제약으로 부작용이라는 큰 재앙을 막을 수 있다. 
+
+그렇다면 setter가 없다면 값은 어떻게 바꿀것인가?
+```java
+try {
+	Address address = new Address("city", "street", "10000");
+	
+	Member member = new Member();
+	member.setUsername("member1");
+	member.setHomeAddress(address);
+	em.persist(member);
+
+	// address를 통째로 갈아끼워야한다. 
+	Address newAddresss = new Address("newCity", address.getStreet(), address.getZipcode()); 
+	member.setHomeASddress(newAddress);
+}
+```
 
 # JPA 활용1
 
