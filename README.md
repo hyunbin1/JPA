@@ -989,6 +989,7 @@ try {
 **불변이라는 작은 제약으로 부작용이라는 큰 재앙을 막을 수 있다. 
 
 그렇다면 setter가 없다면 값은 어떻게 바꿀것인가?
+	
 ```java
 try {
 	Address address = new Address("city", "street", "10000");
@@ -1002,7 +1003,24 @@ try {
 	Address newAddresss = new Address("newCity", address.getStreet(), address.getZipcode()); 
 	member.setHomeASddress(newAddress);
 }
+	
 ```
+
+
+### 값 타입의 비교
+- 값 타입: 인스턴스가 달라도 그 안에 값이 같은면 같은 것으로 봐야 한다. 
+- 하지만 객체는 인스턴스가 다르면 그 안에 값이 같아도 다른것으로 본다. 
+- **동일성(identity)의 비교**: 인스턴스의 참조 값을 비교한다. == 사용.
+- **동등성()의 비교**: 인스턴스의 값을 비교한다. equals() 사용
+- 값 타입은 a.equals(b)를 사용해서 동등성 비교를 해야한다. 
+- 값 타입의 equals() 메소드를 적절하게 재정의(주로 모든 필드 사용)
+		
+
+
+
+
+	
+	
 
 # JPA 활용1
 
