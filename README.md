@@ -1112,6 +1112,81 @@ public class JpaMain {
 => 따라서 위 코드처럼 값 타입을 수정하면 쿼리가 엄청 많이 삭제되었다가 다시 생성되는 단점이 있다. 이를 해결하는 방법은 추후 강의에 나옴.
 
 
+#### 값 타입 컬렉션 대신 사용할 대안
+- 실무에서는 상황에 따라 값 타입 컬렉션 대신에 **일대다 관계**를 고려하는 것이 좋다
+- 일대다 관계를 위한 엔티티를 만들고, 여기에서 값 타입을 사용하는 것이다.
+- 영속성 전이 + 고아 객체 제거를 사용해서 값 타입 컬렉션 처럼 사용하면 된다. 
+- EX)
+```java
+@Entity
+public class AddressEntity{
+	@Id @GeneratedValue
+	private Long id;
+	private Address address;
+	pulbic AddressEntity(String city, String street, String zipcode) {
+		this.address = new Address(city, street, zipcode);
+	}
+	public AddressEntity(Address address) {this.address = address;)
+	... // getter setter
+}
+```
+```java
+@Entity
+public class Member {
+	...
+	@Embedded
+	private Address homeAddress;
+	
+	@ElementCollection
+	@CollectionTable(name = "FAVORIT_FOOD", joinColumns = @JoinColumn(name = "MEMBER_ID"))
+	private Set<String> favoriteFoods = new HashSet<>();
+	
+//	@ElementCollection
+//	@CollectionTable(name = "ADDRESS" , joinColumns = @JoinColumn(name = "MEMBER_ID"))
+//  // address 값 타입을 여러개 저장
+//	private List<Address> addressHistory = new ArrayList<>();
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+	@JoinColumn(name = "MEMBER_ID")
+	private List<AddressEntity> addressHistory = new ArrayList<>();
+		
+	...
+```
+```java
+public class JpaMain {
+	public static void main(String[] args) {
+		...
+		try{
+			Member member = new Member();
+			member.setUsername("member1");
+			member.setAddress(new Address("HomeCity", "street", "10000"));
+			
+			member.getFavoritFoods().add("치킨");
+			member.getFavoritFoods().add("피자");
+			member.getFavoritFoods().add("족발");
+
+			member.getAddressHistory().add(new AddressEntity("old1", "street", "10000"));
+			member.getAddressHistory().add(new AddressEntity("old2", "street", "10000"));
+}}}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 	
