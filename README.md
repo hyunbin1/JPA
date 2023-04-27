@@ -1169,19 +1169,99 @@ public class JpaMain {
 }}}
 ```
 
+## 객체지향 쿼리 언어 - 기본문법
+JPA는 다양한 쿼리 방법을 지원한다.
+- **JPQL**, JPA Criteria, **QueryDSL**, 네이티브 SQL, (JPQL이 안될 때)JDBC API 직접 사용하거나 MyBatis, SpringJdbcTemplate을 사용하면 된다.
 
+### JPQL
+- 필요 이유:
+	- 가장 단순한 조회 방법은 EntityManager.find() 혹은 객체 그래프 탐색(a.getB().getC())이다.
+	- 하지만,,, 나이가 18살 이상인 회원을 모두 검색하고 싶다면 어떻게 하지? 라는 것이 출발점이다. 
+	- JPQL은 sql과 매우 유사한 문법이 제공이 된다.
+	- JPA를 사용하게되면 우리는 모든 코드를 엔티티 객체 중심으로 개발을 해야한다. 
+	- 이때 발생하는 문제는 검색 쿼리이다. 우리는 검색을 할 때도 **테이블이 아닌 엔티티 객체를 대상으로 검색**할 수 있어야한다.
+	- **모든 DB 데이터를 객체로 변환해서 검색하는 것은 현실적으로 불가능하다.**
+	- 애플리케이션이 필요한 데이터만 DB에서 불러오려면 결국 **검색 조건이 포함된 SQL이 필요하다.** 
+- JPQL이란?
+	- JPA는 SQL을 추상화한 JPQL이라는 객체 지향 쿼리 언어를 제공한다.
+	- 이는 SQL 문법 SELECT, FROM, WHERE, GROUP BY, HAVING, JOIN 등의 기능을 지원해준다.
+	- JPQL은 엔티티 객체를 대상으로 쿼리를 날린다. 즉, 객제 지향 SQL이다.
+	- SQL 은 데이터베이스 테이블을 대상으로 쿼리를 날린다는 차이가 있다. 
+	- 따라서 데이터베이스 Sql에 의존하지 않는다는 장점이 있다.
+	
+	```java
+	try{
+		List<Member> result = em.createQuery(
+			"select m From Member as m where m.username like "%kim%", Member.class).getResultList();
+			}
+	```
+		
+	이렇게 사용한 Member은 테이블이 아니라 엔티티 객체를 가리키고 있다. 
 
+하지만 이렇게 사용하게 되면 동적 쿼리를 만들기 매우 어렵다는 단점이 있다. 
+이러한 문제는 어떻게 해결할 수 있을까?
+이를 해결하기 위해서 Criteria를 사용할 수도 있다. 
+- Criteria이란?
+	- 문자가 아닌 자바코드로 jpql을 작성할 수 있다.
+	- jpql 빌더 역할을 한다
+	- jpq 공식 기능이다.
+	- 단점: 너무 복잡하고 실용성이 없다. 
+	- > 대신 **QueryDSL을 사용하길 권장한다.**
+	
+```java
+try{
+	// criteria 사용 준비
+	CriteriaBuilder cb = em.getCriteriaBuilder();
+	CriteriaQuery<Member> query = cb.createQuery(Member.class);
+	
+	Root<Member> m = query.from(Member.class);
+	
+	CriteriaQuery<Member> cq = query.select(m)
+	
+	String username = "hyunbins";
+	if(username != null){
+		cq = cq.where(cb.equal(m.get("username"), "kim"));
+	}
+	List<Member> resultList = em.createQuery(cq).getresultLIst();
+}
+```
+이렇게 코드를 짜면 오류를 쉽게 잡고, 동적 커리를 짜기가 비교적 매우 쉽다는 장점이 있다. 하지만 너무 복잡하다고 느낄수도 있다는 단점도 있다. 그리고 sql스럽지가 않다. 영한 아저씨도 유지 보수가 안되기 때문에 실무에서 사용하지 않는다고 한다. 
 
+### QueryDSL
+- 문자가 아닌 자바코드로 JPQL을 작성할 수 있다. 
+- JPQL 빌더 역할을 한다
+- 컴파일 시점에 문법 오류를 찾을 수 있다.
+- 동적 쿼리 작성이 매우 편리하다. 
+- 단순하고 쉽다.
+- 실무 사용하길 권장한다. 
 
+```java
+@Override
+public List<Order> findAllByQuerydsl(OrderSearch orderSearch){
+	return queryFactory
+		.select(order)
+		.from(order)
+		.join(order.member, member)
+		.where(statusEq(orderSearch), memberNameEq(orderSearch))
+		.fetch();
+}
 
+### 네이티브 SQL
+- JPA가 제공하는 SQL을 직접 사용하는 기능이다. 
+- JPQL로 해결할 수 없는 특정 데이터베이스에 의존적인 기능이다.
+- ex) 오라클 CONNECT BY, 특정 db만 사용하는 SQL 힌트
 
+```java
+try{
+	em.createNativeQuery("select MEMBER_ID, city, street, zipcode, USERNAME from MEMBER").getResultList();
+}
+```
 
-
-
-
-
-
-
+### JDBC 직접 사용, SpringJdbcTemplate 등의 방법
+- JPA를 사용하면서 JDBC 커넥션을 직접 사용하거나, 스프링 JdbcTemplate, 마이바티스 등을 함께 사용 가능하다.
+- 하지만 영속성 컨텍스트를 적절한 시점에 강제로 플러시 해야한다.
+- EX) JPA를 우회해서 SQL을 실행하기 직전에 영속성 컨텍스트를 수동으로 플러시해야한다. 
+- 영한 아저씨도 주로 네이티브 쿼리보다는 이걸 더 많이 사용한다고 한다. 
 
 
 
