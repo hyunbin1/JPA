@@ -1265,6 +1265,44 @@ try{
 
 
 
+### JPQL - 기본 문법과 기능
+JPQL = Java Persistence Query Language
+- JPQL은 SQL을 추상화해서 특정 데이터베이스 SQL에 의존하지 않는다. 
+- JPQL은 결국 SQL로 변환된다. 
+
+#### JPQL 문법
+- select m from Member as m where m.age> 18
+- 엔티티와 속성은 대소문자 구분 O (Member, age)
+- JPQL 키워드는 대소문자 구분 X (SELECT, FROM, where)
+- 엔티티 이름 사용, 테이블 이름 아님(Member)
+- **별칭은 필수(m)** (as는 생략 가능)
+
+#### TypeQuery, Query
+- TypeQuery: 반환 타입이 명활할 때 사용
+- Query: 반환 타입이 명확하지 않을 때 사용
+
+```java
+TypeQuery<Member> query = em.createQuery("SELECT m FROM Member m", Member.class);
+Query query = em.createQuery("SELECT m.username, m.age from Member m");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
